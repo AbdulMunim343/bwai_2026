@@ -61,6 +61,9 @@ export class AdminService {
       search?: string;
       status?: string;
       defines_you_best?: string;
+      gender?: string;
+      university_org?: string;
+      checked_in?: boolean;
       page?: number;
       limit?: number;
     },
@@ -84,6 +87,20 @@ export class AdminService {
 
     if (filters.defines_you_best) {
       qb.andWhere('a.defines_you_best = :dyb', { dyb: filters.defines_you_best });
+    }
+
+    if (filters.gender) {
+      qb.andWhere('a.gender = :gender', { gender: filters.gender });
+    }
+
+    if (filters.university_org) {
+      qb.andWhere('LOWER(a.university_org) LIKE :uorg', {
+        uorg: `%${filters.university_org.toLowerCase()}%`,
+      });
+    }
+
+    if (filters.checked_in !== undefined) {
+      qb.andWhere('r.checked_in = :checkedIn', { checkedIn: filters.checked_in });
     }
 
     const page = filters.page || 1;

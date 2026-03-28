@@ -18,20 +18,33 @@ const statusTransitions = {
   shortlisted: ['attended'],
 };
 
+const INITIAL_FILTERS = {
+  search: '',
+  status: '',
+  defines_you_best: '',
+  gender: '',
+  university_org: '',
+  checked_in: '',
+};
+
 export default function RegistrationsViewer() {
   const { data: workshops } = useAdminWorkshops();
   const [selectedWorkshop, setSelectedWorkshop] = useState('');
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [definesFilter, setDefinesFilter] = useState('');
+  const [filters, setFilters] = useState(INITIAL_FILTERS);
   const [page, setPage] = useState(1);
-  const debouncedSearch = useDebounce(search, 400);
+  const debouncedSearch = useDebounce(filters.search, 400);
+  const debouncedUniversityOrg = useDebounce(filters.university_org, 400);
   const updateStatusMutation = useUpdateRegistrationStatus();
+
+  const activeFilterCount = Object.values(filters).filter(v => v !== '').length;
 
   const params = {
     search: debouncedSearch || undefined,
-    status: statusFilter || undefined,
-    defines_you_best: definesFilter || undefined,
+    status: filters.status || undefined,
+    defines_you_best: filters.defines_you_best || undefined,
+    gender: filters.gender || undefined,
+    university_org: debouncedUniversityOrg || undefined,
+    checked_in: filters.checked_in !== '' ? filters.checked_in === 'true' : undefined,
     page,
     limit: 20,
   };
@@ -40,6 +53,16 @@ export default function RegistrationsViewer() {
   const registrations = result?.data || [];
   const totalPages = result?.totalPages || 1;
   const total = result?.total || 0;
+
+  const setFilter = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+    setPage(1);
+  };
+
+  const clearAllFilters = () => {
+    setFilters(INITIAL_FILTERS);
+    setPage(1);
+  };
 
   const handleExport = async () => {
     if (!selectedWorkshop) return;
@@ -66,51 +89,164 @@ export default function RegistrationsViewer() {
     }
   };
 
-  const inputCls = "px-3.5 py-2.5 border border-gdg-border rounded-lg text-sm focus:outline-none focus:border-gdg-blue focus:ring-2 focus:ring-gdg-blue/15";
+  const inputCls = "w-full px-3 py-2 border border-gdg-border rounded-lg text-sm focus:outline-none focus:border-gdg-blue focus:ring-2 focus:ring-gdg-blue/15 bg-white";
+  const labelCls = "block text-xs font-semibold text-gdg-gray uppercase tracking-wide mb-1.5";
 
   return (
     <div>
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-2xl font-bold text-gdg-dark">Registrations</h1>
-        <p className="text-gdg-gray mt-2">View, filter, and manage registrations per workshop</p>
+        <p className="text-gdg-gray mt-1">View, filter, and manage registrations per workshop</p>
       </div>
 
-      <div className="flex gap-3 mb-6 flex-wrap">
-        <select className={`${inputCls} max-w-xs`} value={selectedWorkshop} onChange={e => { setSelectedWorkshop(e.target.value); setPage(1); }}>
-          <option value="">Select a workshop</option>
-          {workshops?.map(w => <option key={w.id} value={w.id}>{w.title}</option>)}
-        </select>
-        <input className={`${inputCls} flex-1 min-w-48`} placeholder="Search by name, email, phone, CNIC..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
-        <select className={`${inputCls} max-w-36`} value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }}>
-          <option value="">All Statuses</option>
-          <option value="pending">Pending</option>
-          <option value="shortlisted">Shortlisted</option>
-          <option value="attended">Attended</option>
-          <option value="rejected">Rejected</option>
-        </select>
-        <select className={`${inputCls} max-w-48`} value={definesFilter} onChange={e => { setDefinesFilter(e.target.value); setPage(1); }}>
-          <option value="">All Profiles</option>
-          <option value="Student">Student</option>
-          <option value="Young Professional">Young Professional</option>
-          <option value="Intermediate Expert">Intermediate Expert</option>
-          <option value="Senior Expert">Senior Expert</option>
-          <option value="Freelancer">Freelancer</option>
-          <option value="Other">Other</option>
-        </select>
+      {/* Workshop selector */}
+      <div className="flex items-end gap-3 mb-5">
+        <div className="flex-1 max-w-sm">
+          <label className={labelCls}>Workshop</label>
+          <select
+            className={inputCls}
+            value={selectedWorkshop}
+            onChange={e => { setSelectedWorkshop(e.target.value); setPage(1); }}
+          >
+            <option value="">Select a workshop</option>
+            {workshops?.map(w => <option key={w.id} value={w.id}>{w.title}</option>)}
+          </select>
+        </div>
         {selectedWorkshop && (
-          <button className="px-6 py-2.5 border-2 border-gdg-border rounded-lg text-sm font-semibold text-gdg-gray hover:border-gdg-blue hover:text-gdg-blue" onClick={handleExport}>Export CSV</button>
+          <button
+            className="px-5 py-2 border-2 border-gdg-border rounded-lg text-sm font-semibold text-gdg-gray hover:border-gdg-blue hover:text-gdg-blue"
+            onClick={handleExport}
+          >
+            Export CSV
+          </button>
         )}
       </div>
+
+      {/* Filters panel */}
+      {selectedWorkshop && (
+        <div className="bg-gdg-light-gray border border-gdg-border rounded-xl p-4 mb-5">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-bold text-gdg-dark">
+              Filters
+              {activeFilterCount > 0 && (
+                <span className="ml-2 bg-gdg-blue text-white text-xs font-semibold rounded-full px-2 py-0.5">
+                  {activeFilterCount} active
+                </span>
+              )}
+            </span>
+            {activeFilterCount > 0 && (
+              <button
+                onClick={clearAllFilters}
+                className="text-xs font-semibold text-gdg-red hover:underline"
+              >
+                Clear all filters
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {/* Search */}
+            <div>
+              <label className={labelCls}>Search</label>
+              <input
+                className={inputCls}
+                placeholder="Name, email, phone, CNIC..."
+                value={filters.search}
+                onChange={e => setFilter('search', e.target.value)}
+              />
+            </div>
+
+            {/* Status */}
+            <div>
+              <label className={labelCls}>Status</label>
+              <select
+                className={inputCls}
+                value={filters.status}
+                onChange={e => setFilter('status', e.target.value)}
+              >
+                <option value="">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="shortlisted">Shortlisted</option>
+                <option value="attended">Attended</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+
+            {/* Profile */}
+            <div>
+              <label className={labelCls}>Profile</label>
+              <select
+                className={inputCls}
+                value={filters.defines_you_best}
+                onChange={e => setFilter('defines_you_best', e.target.value)}
+              >
+                <option value="">All Profiles</option>
+                <option value="Student">Student</option>
+                <option value="Young Professional">Young Professional</option>
+                <option value="Intermediate Expert">Intermediate Expert</option>
+                <option value="Senior Expert">Senior Expert</option>
+                <option value="Freelancer">Freelancer</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            {/* Gender */}
+            <div>
+              <label className={labelCls}>Gender</label>
+              <select
+                className={inputCls}
+                value={filters.gender}
+                onChange={e => setFilter('gender', e.target.value)}
+              >
+                <option value="">All Genders</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Non-Binary">Non-Binary</option>
+                <option value="Prefer not to say">Prefer not to say</option>
+              </select>
+            </div>
+
+            {/* Check-in */}
+            <div>
+              <label className={labelCls}>Check-in</label>
+              <select
+                className={inputCls}
+                value={filters.checked_in}
+                onChange={e => setFilter('checked_in', e.target.value)}
+              >
+                <option value="">All</option>
+                <option value="true">Checked In</option>
+                <option value="false">Not Checked In</option>
+              </select>
+            </div>
+
+            {/* University / Org */}
+            <div>
+              <label className={labelCls}>University / Org</label>
+              <input
+                className={inputCls}
+                placeholder="Search organization..."
+                value={filters.university_org}
+                onChange={e => setFilter('university_org', e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {!selectedWorkshop && (
         <div className="text-center py-16 text-gdg-gray">Select a workshop to view registrations</div>
       )}
 
-      {selectedWorkshop && isLoading && <div className="flex justify-center items-center py-16 text-gdg-gray">Loading...</div>}
+      {selectedWorkshop && isLoading && (
+        <div className="flex justify-center items-center py-16 text-gdg-gray">Loading...</div>
+      )}
 
       {selectedWorkshop && !isLoading && (
         <>
-          <div className="text-sm text-gdg-gray mb-3">Showing {registrations.length} of {total} registrations</div>
+          <div className="text-sm text-gdg-gray mb-3">
+            Showing {registrations.length} of {total} registrations
+          </div>
           <div className="bg-white rounded-xl border border-gdg-border overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
@@ -135,7 +271,9 @@ export default function RegistrationsViewer() {
                       <td className="py-3 px-4 border-b border-gdg-border text-sm">{r.attendee?.cnic}</td>
                       <td className="py-3 px-4 border-b border-gdg-border text-sm">{r.attendee?.defines_you_best || '-'}</td>
                       <td className="py-3 px-4 border-b border-gdg-border">
-                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${statusColors[r.status] || ''}`}>{r.status}</span>
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${statusColors[r.status] || ''}`}>
+                          {r.status}
+                        </span>
                       </td>
                       <td className="py-3 px-4 border-b border-gdg-border">
                         <div className="flex gap-1.5">
@@ -161,7 +299,9 @@ export default function RegistrationsViewer() {
                   );
                 })}
                 {registrations.length === 0 && (
-                  <tr><td colSpan={7} className="text-center text-gdg-gray py-8">No registrations found</td></tr>
+                  <tr>
+                    <td colSpan={7} className="text-center text-gdg-gray py-8">No registrations found</td>
+                  </tr>
                 )}
               </tbody>
             </table>
@@ -169,9 +309,21 @@ export default function RegistrationsViewer() {
 
           {totalPages > 1 && (
             <div className="flex justify-center items-center gap-2 mt-6">
-              <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-3 py-1.5 border border-gdg-border rounded-lg text-sm disabled:opacity-40">Previous</button>
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="px-3 py-1.5 border border-gdg-border rounded-lg text-sm disabled:opacity-40"
+              >
+                Previous
+              </button>
               <span className="text-sm text-gdg-gray">Page {page} of {totalPages}</span>
-              <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-3 py-1.5 border border-gdg-border rounded-lg text-sm disabled:opacity-40">Next</button>
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="px-3 py-1.5 border border-gdg-border rounded-lg text-sm disabled:opacity-40"
+              >
+                Next
+              </button>
             </div>
           )}
         </>
