@@ -19,7 +19,10 @@ const statusTransitions = {
 };
 
 const INITIAL_FILTERS = {
-  search: '',
+  name: '',
+  email: '',
+  phone: '',
+  cnic: '',
   status: '',
   defines_you_best: '',
   gender: '',
@@ -32,14 +35,20 @@ export default function RegistrationsViewer() {
   const [selectedWorkshop, setSelectedWorkshop] = useState('');
   const [filters, setFilters] = useState(INITIAL_FILTERS);
   const [page, setPage] = useState(1);
-  const debouncedSearch = useDebounce(filters.search, 400);
+  const debouncedName = useDebounce(filters.name, 400);
+  const debouncedEmail = useDebounce(filters.email, 400);
+  const debouncedPhone = useDebounce(filters.phone, 400);
+  const debouncedCnic = useDebounce(filters.cnic, 400);
   const debouncedUniversityOrg = useDebounce(filters.university_org, 400);
   const updateStatusMutation = useUpdateRegistrationStatus();
 
   const activeFilterCount = Object.values(filters).filter(v => v !== '').length;
 
   const params = {
-    search: debouncedSearch || undefined,
+    name: debouncedName || undefined,
+    email: debouncedEmail || undefined,
+    phone: debouncedPhone || undefined,
+    cnic: debouncedCnic || undefined,
     status: filters.status || undefined,
     defines_you_best: filters.defines_you_best || undefined,
     gender: filters.gender || undefined,
@@ -144,15 +153,48 @@ export default function RegistrationsViewer() {
             )}
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            {/* Search */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            {/* Name */}
             <div>
-              <label className={labelCls}>Search</label>
+              <label className={labelCls}>Name</label>
               <input
                 className={inputCls}
-                placeholder="Name, email, phone, CNIC..."
-                value={filters.search}
-                onChange={e => setFilter('search', e.target.value)}
+                placeholder="Search name..."
+                value={filters.name}
+                onChange={e => setFilter('name', e.target.value)}
+              />
+            </div>
+
+            {/* Email */}
+            <div>
+              <label className={labelCls}>Email</label>
+              <input
+                className={inputCls}
+                placeholder="Search email..."
+                value={filters.email}
+                onChange={e => setFilter('email', e.target.value)}
+              />
+            </div>
+
+            {/* Phone */}
+            <div>
+              <label className={labelCls}>Phone</label>
+              <input
+                className={inputCls}
+                placeholder="Search phone..."
+                value={filters.phone}
+                onChange={e => setFilter('phone', e.target.value)}
+              />
+            </div>
+
+            {/* CNIC */}
+            <div>
+              <label className={labelCls}>CNIC</label>
+              <input
+                className={inputCls}
+                placeholder="Search CNIC..."
+                value={filters.cnic}
+                onChange={e => setFilter('cnic', e.target.value)}
               />
             </div>
 
@@ -206,6 +248,17 @@ export default function RegistrationsViewer() {
               </select>
             </div>
 
+            {/* University / Org */}
+            <div>
+              <label className={labelCls}>University / Org</label>
+              <input
+                className={inputCls}
+                placeholder="Search organization..."
+                value={filters.university_org}
+                onChange={e => setFilter('university_org', e.target.value)}
+              />
+            </div>
+
             {/* Check-in */}
             <div>
               <label className={labelCls}>Check-in</label>
@@ -218,17 +271,6 @@ export default function RegistrationsViewer() {
                 <option value="true">Checked In</option>
                 <option value="false">Not Checked In</option>
               </select>
-            </div>
-
-            {/* University / Org */}
-            <div>
-              <label className={labelCls}>University / Org</label>
-              <input
-                className={inputCls}
-                placeholder="Search organization..."
-                value={filters.university_org}
-                onChange={e => setFilter('university_org', e.target.value)}
-              />
             </div>
           </div>
         </div>

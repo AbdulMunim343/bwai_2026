@@ -3,7 +3,10 @@ import api from '../../../axios-instance';
 export const adminRegistrationApi = {
   getByWorkshop: (workshopId, params = {}) => {
     const query = new URLSearchParams({ workshop_id: workshopId });
-    if (params.search) query.set('search', params.search);
+    if (params.name) query.set('name', params.name);
+    if (params.email) query.set('email', params.email);
+    if (params.phone) query.set('phone', params.phone);
+    if (params.cnic) query.set('cnic', params.cnic);
     if (params.status) query.set('status', params.status);
     if (params.defines_you_best) query.set('defines_you_best', params.defines_you_best);
     if (params.gender) query.set('gender', params.gender);

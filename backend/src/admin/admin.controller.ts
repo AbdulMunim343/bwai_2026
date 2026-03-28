@@ -53,7 +53,10 @@ export class AdminController {
   @Get('registrations')
   getRegistrations(
     @Query('workshop_id') workshopId: string,
-    @Query('search') search?: string,
+    @Query('name') name?: string,
+    @Query('email') email?: string,
+    @Query('phone') phone?: string,
+    @Query('cnic') cnic?: string,
     @Query('status') status?: string,
     @Query('defines_you_best') definesYouBest?: string,
     @Query('gender') gender?: string,
@@ -63,7 +66,10 @@ export class AdminController {
     @Query('limit') limit?: string,
   ) {
     return this.adminService.getRegistrations(workshopId, {
-      search,
+      name,
+      email,
+      phone,
+      cnic,
       status,
       defines_you_best: definesYouBest,
       gender,

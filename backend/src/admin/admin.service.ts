@@ -58,7 +58,10 @@ export class AdminService {
   async getRegistrations(
     workshopId: string,
     filters: {
-      search?: string;
+      name?: string;
+      email?: string;
+      phone?: string;
+      cnic?: string;
       status?: string;
       defines_you_best?: string;
       gender?: string;
@@ -73,12 +76,20 @@ export class AdminService {
       .leftJoinAndSelect('r.attendee', 'a')
       .where('r.workshop_id = :workshopId', { workshopId });
 
-    if (filters.search) {
-      const q = `%${filters.search.toLowerCase()}%`;
-      qb.andWhere(
-        '(LOWER(a.name) LIKE :q OR LOWER(a.email) LIKE :q OR LOWER(a.phone) LIKE :q OR LOWER(a.cnic) LIKE :q)',
-        { q },
-      );
+    if (filters.name) {
+      qb.andWhere('LOWER(a.name) LIKE :name', { name: `%${filters.name.toLowerCase()}%` });
+    }
+
+    if (filters.email) {
+      qb.andWhere('LOWER(a.email) LIKE :email', { email: `%${filters.email.toLowerCase()}%` });
+    }
+
+    if (filters.phone) {
+      qb.andWhere('LOWER(a.phone) LIKE :phone', { phone: `%${filters.phone.toLowerCase()}%` });
+    }
+
+    if (filters.cnic) {
+      qb.andWhere('LOWER(a.cnic) LIKE :cnic', { cnic: `%${filters.cnic.toLowerCase()}%` });
     }
 
     if (filters.status) {
