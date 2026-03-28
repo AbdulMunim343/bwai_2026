@@ -140,8 +140,9 @@ export class AdminService {
     if (!registration) throw new NotFoundException('Registration not found');
 
     const validTransitions: Record<string, string[]> = {
-      pending: ['shortlisted', 'rejected'],
-      shortlisted: ['attended'],
+      pending: ['confirm', 'shortlist', 'reject'],
+      confirm: ['check-in'],
+      shortlist: ['check-in', 'reject'],
     };
 
     const allowed = validTransitions[registration.status];
@@ -153,7 +154,7 @@ export class AdminService {
 
     registration.status = newStatus;
 
-    if (newStatus === 'shortlisted') {
+    if (newStatus === 'shortlist') {
       const qrData = JSON.stringify({
         registrationId: registration.id,
         name: registration.attendee.name,
@@ -171,7 +172,7 @@ export class AdminService {
         registration.id,
         qrData,
       );
-    } else if (newStatus === 'attended') {
+    } else if (newStatus === 'check-in') {
       registration.checked_in = true;
       registration.checked_in_at = new Date();
       await this.registrationRepo.save(registration);
@@ -181,7 +182,7 @@ export class AdminService {
         registration.attendee.name,
         registration.workshop,
       );
-    } else if (newStatus === 'rejected') {
+    } else if (newStatus === 'reject') {
       await this.registrationRepo.save(registration);
 
       await this.emailService.sendRejectionEmail(
@@ -189,6 +190,8 @@ export class AdminService {
         registration.attendee.name,
         registration.workshop.title,
       );
+    } else {
+      await this.registrationRepo.save(registration);
     }
 
     return registration;
@@ -244,11 +247,11 @@ export class AdminService {
     });
     if (!registration) throw new NotFoundException('Registration not found');
 
-    if (registration.status !== 'shortlisted') {
-      throw new BadRequestException(`Cannot mark as attended. Current status: ${registration.status}`);
+    if (registration.status !== 'shortlist' && registration.status !== 'confirm') {
+      throw new BadRequestException(`Cannot check in. Current status: ${registration.status}`);
     }
 
-    registration.status = 'attended';
+    registration.status = 'check-in';
     registration.checked_in = true;
     registration.checked_in_at = new Date();
     return this.registrationRepo.save(registration);
