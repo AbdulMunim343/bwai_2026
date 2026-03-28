@@ -140,9 +140,14 @@ export class AdminService {
     if (!registration) throw new NotFoundException('Registration not found');
 
     const validTransitions: Record<string, string[]> = {
-      pending: ['confirm', 'shortlist', 'reject'],
-      confirm: ['check-in'],
-      shortlist: ['check-in', 'reject'],
+      // current statuses
+      pending:    ['confirm', 'shortlist', 'reject'],
+      confirm:    ['check-in'],
+      shortlist:  ['check-in', 'reject'],
+      // backward-compat: old status values already in the database
+      shortlisted: ['check-in', 'reject'],
+      attended:    [],
+      rejected:    [],
     };
 
     const allowed = validTransitions[registration.status];
@@ -198,15 +203,19 @@ export class AdminService {
   }
 
   async bulkUpdateStatus(registrationIds: string[], newStatus: string) {
-    const results: Registration[] = [];
-    const emailQueue: Array<{ registration: Registration }> = [];
+    const succeeded: Registration[] = [];
+    const failed: { id: string; error: string }[] = [];
 
     for (const id of registrationIds) {
-      const reg = await this.updateRegistrationStatus(id, newStatus);
-      results.push(reg);
+      try {
+        const reg = await this.updateRegistrationStatus(id, newStatus);
+        succeeded.push(reg);
+      } catch (err) {
+        failed.push({ id, error: err.message });
+      }
     }
 
-    return results;
+    return { succeeded, failed };
   }
 
   async scanQrCode(qrData: string) {

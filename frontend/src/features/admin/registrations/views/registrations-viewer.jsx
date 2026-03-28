@@ -5,11 +5,16 @@ import { useAdminRegistrations, useUpdateRegistrationStatus, useBulkUpdateStatus
 import { adminRegistrationApi } from '../admin-registration-api';
 
 const STATUS_COLORS = {
-  pending:   'bg-yellow-100 text-amber-600',
-  confirm:   'bg-blue-100 text-gdg-blue',
-  shortlist: 'bg-purple-100 text-purple-700',
-  reject:    'bg-red-100 text-gdg-red',
-  'check-in':'bg-green-100 text-gdg-green',
+  // current
+  pending:     'bg-yellow-100 text-amber-600',
+  confirm:     'bg-blue-100 text-gdg-blue',
+  shortlist:   'bg-purple-100 text-purple-700',
+  reject:      'bg-red-100 text-gdg-red',
+  'check-in':  'bg-green-100 text-gdg-green',
+  // legacy (old DB values)
+  shortlisted: 'bg-purple-100 text-purple-700',
+  attended:    'bg-green-100 text-gdg-green',
+  rejected:    'bg-red-100 text-gdg-red',
 };
 
 const STATUS_BUTTON_COLORS = {
@@ -20,9 +25,12 @@ const STATUS_BUTTON_COLORS = {
 };
 
 const STATUS_TRANSITIONS = {
+  // current
   pending:   ['confirm', 'shortlist', 'reject'],
   confirm:   ['check-in'],
   shortlist: ['check-in', 'reject'],
+  // legacy (old DB values)
+  shortlisted: ['check-in', 'reject'],
 };
 
 const BULK_STATUSES = ['confirm', 'shortlist', 'reject', 'check-in'];
@@ -114,8 +122,13 @@ export default function RegistrationsViewer() {
   const handleBulkUpdate = async (status) => {
     if (selectedIds.size === 0) return;
     try {
-      await bulkUpdateMutation.mutateAsync({ ids: Array.from(selectedIds), status });
-      toast.success(`${selectedIds.size} registration(s) → ${status}`);
+      const result = await bulkUpdateMutation.mutateAsync({ ids: Array.from(selectedIds), status });
+      if (result.failed?.length > 0) {
+        toast.success(`${result.succeeded.length} updated`);
+        toast.error(`${result.failed.length} could not be updated (invalid transition)`);
+      } else {
+        toast.success(`${result.succeeded.length} registration(s) → ${status}`);
+      }
       setSelectedIds(new Set());
     } catch (err) {
       toast.error(err.response?.data?.message || 'Bulk update failed');
