@@ -2,9 +2,8 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useAdminWorkshops, useCreateWorkshop, useUpdateWorkshop, useDeleteWorkshop } from '../admin-workshop-repository';
 import { validateWorkshopForm } from '../admin-workshop-service';
-import { useAdminEvents } from '../../event-management/admin-event-repository';
 
-const emptyForm = { title: '', description: '', date: '', time: '', venue: '', max_capacity: '', status: 'upcoming', event_id: '' };
+const emptyForm = { title: '', description: '', date: '', time: '', venue: '', max_capacity: '', status: 'upcoming' };
 
 const badgeColors = {
   open: 'bg-green-100 text-gdg-green',
@@ -15,7 +14,6 @@ const badgeColors = {
 
 export default function WorkshopCrud() {
   const { data: workshops, isLoading } = useAdminWorkshops();
-  const { data: eventsData } = useAdminEvents();
   const createMutation = useCreateWorkshop();
   const updateMutation = useUpdateWorkshop();
   const deleteMutation = useDeleteWorkshop();
@@ -30,7 +28,7 @@ export default function WorkshopCrud() {
   const openCreate = () => { setEditingId(null); setForm(emptyForm); setErrors({}); setShowModal(true); };
   const openEdit = (w) => {
     setEditingId(w.id);
-    setForm({ title: w.title, description: w.description, date: w.date, time: w.time, venue: w.venue, max_capacity: w.max_capacity ?? w.maxCapacity, status: w.status, event_id: w.event_id || '' });
+    setForm({ title: w.title, description: w.description, date: w.date, time: w.time, venue: w.venue, max_capacity: w.max_capacity ?? w.maxCapacity, status: w.status });
     setErrors({});
     setShowModal(true);
   };
@@ -42,12 +40,11 @@ export default function WorkshopCrud() {
     if (Object.keys(v).length > 0) return;
 
     try {
-      const payload = { ...form, max_capacity: Number(form.max_capacity), event_id: form.event_id || null };
       if (editingId) {
-        await updateMutation.mutateAsync({ id: editingId, data: payload });
+        await updateMutation.mutateAsync({ id: editingId, data: { ...form, max_capacity: Number(form.max_capacity) } });
         toast.success('Workshop updated');
       } else {
-        await createMutation.mutateAsync(payload);
+        await createMutation.mutateAsync({ ...form, max_capacity: Number(form.max_capacity) });
         toast.success('Workshop created');
       }
       setShowModal(false);
@@ -174,15 +171,6 @@ export default function WorkshopCrud() {
                     <option value="completed">Completed</option>
                   </select>
                 </div>
-              </div>
-              <div className="mb-5">
-                <label className="block mb-1.5 font-medium text-sm text-gdg-dark">Event <span className="text-gdg-gray font-normal">(optional)</span></label>
-                <select value={form.event_id} onChange={e => setForm(f => ({ ...f, event_id: e.target.value }))} className={inputCls}>
-                  <option value="">— No event —</option>
-                  {(eventsData?.data || []).map(ev => (
-                    <option key={ev.id} value={ev.id}>{ev.name} ({ev.type})</option>
-                  ))}
-                </select>
               </div>
               <div className="flex gap-3 justify-end mt-6">
                 <button type="button" className="px-6 py-2.5 border-2 border-gdg-border rounded-lg text-sm font-semibold text-gdg-gray hover:border-gdg-blue hover:text-gdg-blue" onClick={() => setShowModal(false)}>Cancel</button>

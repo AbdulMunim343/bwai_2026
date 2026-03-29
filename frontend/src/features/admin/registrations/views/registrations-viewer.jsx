@@ -334,13 +334,11 @@ export default function RegistrationsViewer() {
                   <th className="text-left py-3 px-3 border-b border-gdg-border font-semibold text-xs text-gdg-gray uppercase tracking-wide whitespace-nowrap">CNIC</th>
                   <th className="text-left py-3 px-3 border-b border-gdg-border font-semibold text-xs text-gdg-gray uppercase tracking-wide whitespace-nowrap">Gender</th>
                   <th className="text-left py-3 px-3 border-b border-gdg-border font-semibold text-xs text-gdg-gray uppercase tracking-wide whitespace-nowrap">University / Org</th>
-                  <th className="text-left py-3 px-3 border-b border-gdg-border font-semibold text-xs text-gdg-gray uppercase tracking-wide whitespace-nowrap">Profile</th>
                   <th className="text-left py-3 px-3 border-b border-gdg-border font-semibold text-xs text-gdg-gray uppercase tracking-wide whitespace-nowrap">GitHub</th>
                   <th className="text-left py-3 px-3 border-b border-gdg-border font-semibold text-xs text-gdg-gray uppercase tracking-wide whitespace-nowrap">LinkedIn</th>
                   <th className="text-left py-3 px-3 border-b border-gdg-border font-semibold text-xs text-gdg-gray uppercase tracking-wide whitespace-nowrap">Motivation</th>
                   <th className="text-left py-3 px-3 border-b border-gdg-border font-semibold text-xs text-gdg-gray uppercase tracking-wide whitespace-nowrap">Registered</th>
                   <th className="text-left py-3 px-3 border-b border-gdg-border font-semibold text-xs text-gdg-gray uppercase tracking-wide whitespace-nowrap">Status</th>
-                  <th className="text-left py-3 px-3 border-b border-gdg-border font-semibold text-xs text-gdg-gray uppercase tracking-wide whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -386,9 +384,6 @@ export default function RegistrationsViewer() {
                         {a.university_org || '—'}
                       </td>
 
-                      {/* Profile */}
-                      <td className="py-2.5 px-3 border-b border-gdg-border whitespace-nowrap">{a.defines_you_best || '—'}</td>
-
                       {/* GitHub */}
                       <td className="py-2.5 px-3 border-b border-gdg-border whitespace-nowrap">
                         {a.github ? (
@@ -432,22 +427,6 @@ export default function RegistrationsViewer() {
                         <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${STATUS_COLORS[r.status] || 'bg-gray-100 text-gray-500'}`}>
                           {STATUS_LABELS[r.status] ?? r.status}
                         </span>
-                      </td>
-
-                      {/* Actions */}
-                      <td className="py-2.5 px-3 border-b border-gdg-border">
-                        <div className="flex gap-1.5 flex-wrap">
-                          {allowed.map(next => (
-                            <button
-                              key={next}
-                              onClick={() => handleStatusChange(r.id, next)}
-                              disabled={updateStatusMutation.isPending}
-                              className={`px-3 py-1 rounded-lg text-xs font-semibold disabled:opacity-50 whitespace-nowrap ${STATUS_BUTTON_COLORS[next] || 'bg-gray-200 text-gray-700'}`}
-                            >
-                              {STATUS_LABELS[next] ?? next}
-                            </button>
-                          ))}
-                        </div>
                       </td>
                     </tr>
                   );
