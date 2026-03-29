@@ -1,6 +1,5 @@
-import { IsArray, IsString, IsIn, ArrayMinSize, IsUUID } from 'class-validator';
-
-const VALID_STATUSES = ['pending', 'confirm', 'shortlist', 'reject', 'check-in'];
+import { IsArray, IsEnum, ArrayMinSize, IsUUID } from 'class-validator';
+import { RegistrationStatus } from '../../common/enums/registration-status.enum';
 
 export class UpdateRegistrationStatusDto {
   @IsArray()
@@ -8,9 +7,8 @@ export class UpdateRegistrationStatusDto {
   @IsUUID('4', { each: true, message: 'Each id must be a valid UUID' })
   ids: string[];
 
-  @IsString()
-  @IsIn(VALID_STATUSES, {
-    message: `status must be one of: ${VALID_STATUSES.join(', ')}`,
+  @IsEnum(RegistrationStatus, {
+    message: `status must be one of: ${Object.values(RegistrationStatus).join(', ')}`,
   })
-  status: string;
+  status: RegistrationStatus;
 }

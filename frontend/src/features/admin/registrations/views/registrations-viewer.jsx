@@ -3,37 +3,14 @@ import toast from 'react-hot-toast';
 import { useAdminWorkshops } from '../../workshop-management/admin-workshop-repository';
 import { useAdminRegistrations, useUpdateRegistrationStatus, useBulkUpdateStatus } from '../admin-registration-repository';
 import { adminRegistrationApi } from '../admin-registration-api';
-
-const STATUS_COLORS = {
-  // current
-  pending:     'bg-yellow-100 text-amber-600',
-  confirm:     'bg-blue-100 text-gdg-blue',
-  shortlist:   'bg-purple-100 text-purple-700',
-  reject:      'bg-red-100 text-gdg-red',
-  'check-in':  'bg-green-100 text-gdg-green',
-  // legacy (old DB values)
-  shortlisted: 'bg-purple-100 text-purple-700',
-  attended:    'bg-green-100 text-gdg-green',
-  rejected:    'bg-red-100 text-gdg-red',
-};
-
-const STATUS_BUTTON_COLORS = {
-  confirm:   'bg-gdg-blue text-white hover:bg-blue-600',
-  shortlist: 'bg-purple-600 text-white hover:bg-purple-700',
-  'check-in':'bg-gdg-green text-white hover:bg-green-600',
-  reject:    'bg-gdg-red text-white hover:bg-red-600',
-};
-
-const STATUS_TRANSITIONS = {
-  // current
-  pending:   ['confirm', 'shortlist', 'reject'],
-  confirm:   ['check-in'],
-  shortlist: ['check-in', 'reject'],
-  // legacy (old DB values)
-  shortlisted: ['check-in', 'reject'],
-};
-
-const BULK_STATUSES = ['confirm', 'shortlist', 'reject', 'check-in'];
+import {
+  STATUS_COLORS,
+  STATUS_BUTTON_COLORS,
+  STATUS_TRANSITIONS,
+  STATUS_LABELS,
+  STATUS_FILTER_OPTIONS,
+  BULK_STATUSES,
+} from '../../../../shared/constants/registration-status';
 
 const INITIAL_FILTERS = {
   name: '',
@@ -233,11 +210,9 @@ export default function RegistrationsViewer() {
               <label className={labelCls}>Status</label>
               <select className={inputCls} value={draftFilters.status} onChange={e => setDraftFilter('status', e.target.value)}>
                 <option value="">All Statuses</option>
-                <option value="pending">Pending</option>
-                <option value="confirm">Confirm</option>
-                <option value="shortlist">Shortlist</option>
-                <option value="reject">Reject</option>
-                <option value="check-in">Check-in</option>
+                {STATUS_FILTER_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
               </select>
             </div>
             <div>
@@ -302,9 +277,9 @@ export default function RegistrationsViewer() {
               key={s}
               onClick={() => handleBulkUpdate(s)}
               disabled={bulkUpdateMutation.isPending}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize disabled:opacity-50 ${STATUS_BUTTON_COLORS[s]}`}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold disabled:opacity-50 ${STATUS_BUTTON_COLORS[s]}`}
             >
-              {s}
+              {STATUS_LABELS[s] ?? s}
             </button>
           ))}
           <button
@@ -372,8 +347,8 @@ export default function RegistrationsViewer() {
                       <td className="py-3 px-4 border-b border-gdg-border text-sm">{r.attendee?.cnic}</td>
                       <td className="py-3 px-4 border-b border-gdg-border text-sm">{r.attendee?.defines_you_best || '-'}</td>
                       <td className="py-3 px-4 border-b border-gdg-border">
-                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold capitalize ${STATUS_COLORS[r.status] || 'bg-gray-100 text-gray-500'}`}>
-                          {r.status}
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${STATUS_COLORS[r.status] || 'bg-gray-100 text-gray-500'}`}>
+                          {STATUS_LABELS[r.status] ?? r.status}
                         </span>
                       </td>
                       <td className="py-3 px-4 border-b border-gdg-border">
@@ -383,9 +358,9 @@ export default function RegistrationsViewer() {
                               key={next}
                               onClick={() => handleStatusChange(r.id, next)}
                               disabled={updateStatusMutation.isPending}
-                              className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize disabled:opacity-50 ${STATUS_BUTTON_COLORS[next] || 'bg-gray-200 text-gray-700'}`}
+                              className={`px-3 py-1 rounded-lg text-xs font-semibold disabled:opacity-50 ${STATUS_BUTTON_COLORS[next] || 'bg-gray-200 text-gray-700'}`}
                             >
-                              {next}
+                              {STATUS_LABELS[next] ?? next}
                             </button>
                           ))}
                           {allowed.length === 0 && <span className="text-xs text-gdg-gray">—</span>}

@@ -7,6 +7,7 @@ import { ExceptionRequest } from '../entities/exception-request.entity';
 import { Attendee } from '../entities/attendee.entity';
 import { Admin } from '../entities/admin.entity';
 import { EmailService } from '../email/email.service';
+import { RegistrationStatus, LegacyRegistrationStatus } from '../common/enums/registration-status.enum';
 import * as QRCode from 'qrcode';
 import * as bcrypt from 'bcrypt';
 
@@ -139,19 +140,22 @@ export class AdminService {
     });
     if (!registration) throw new NotFoundException('Registration not found');
 
-    const validTransitions: Record<string, string[]> = {
+    const { PENDING, CONFIRM, SHORTLIST, REJECT, CHECK_IN } = RegistrationStatus;
+    const { SHORTLISTED, ATTENDED, REJECTED } = LegacyRegistrationStatus;
+
+    const validTransitions: Record<string, RegistrationStatus[]> = {
       // current statuses
-      pending:    ['confirm', 'shortlist', 'reject'],
-      confirm:    ['check-in'],
-      shortlist:  ['check-in', 'reject'],
+      [PENDING]:    [CONFIRM, SHORTLIST, REJECT],
+      [CONFIRM]:    [CHECK_IN],
+      [SHORTLIST]:  [CHECK_IN, REJECT],
       // backward-compat: old status values already in the database
-      shortlisted: ['check-in', 'reject'],
-      attended:    [],
-      rejected:    [],
+      [SHORTLISTED]: [CHECK_IN, REJECT],
+      [ATTENDED]:    [],
+      [REJECTED]:    [],
     };
 
     const allowed = validTransitions[registration.status];
-    if (!allowed || !allowed.includes(newStatus)) {
+    if (!allowed || !allowed.includes(newStatus as RegistrationStatus)) {
       throw new BadRequestException(
         `Cannot transition from "${registration.status}" to "${newStatus}". Allowed: ${allowed?.join(', ') || 'none'}`,
       );
@@ -159,7 +163,7 @@ export class AdminService {
 
     registration.status = newStatus;
 
-    if (newStatus === 'shortlist') {
+    if (newStatus === SHORTLIST) {
       const qrData = JSON.stringify({
         registrationId: registration.id,
         name: registration.attendee.name,
@@ -177,7 +181,7 @@ export class AdminService {
         registration.id,
         qrData,
       );
-    } else if (newStatus === 'check-in') {
+    } else if (newStatus === CHECK_IN) {
       registration.checked_in = true;
       registration.checked_in_at = new Date();
       await this.registrationRepo.save(registration);
@@ -187,7 +191,7 @@ export class AdminService {
         registration.attendee.name,
         registration.workshop,
       );
-    } else if (newStatus === 'reject') {
+    } else if (newStatus === REJECT) {
       await this.registrationRepo.save(registration);
 
       await this.emailService.sendRejectionEmail(
@@ -256,11 +260,14 @@ export class AdminService {
     });
     if (!registration) throw new NotFoundException('Registration not found');
 
-    if (registration.status !== 'shortlist' && registration.status !== 'confirm') {
+    const { SHORTLIST, CONFIRM, CHECK_IN } = RegistrationStatus;
+    const { SHORTLISTED } = LegacyRegistrationStatus;
+
+    if (![SHORTLIST, CONFIRM, SHORTLISTED].includes(registration.status as any)) {
       throw new BadRequestException(`Cannot check in. Current status: ${registration.status}`);
     }
 
-    registration.status = 'check-in';
+    registration.status = CHECK_IN;
     registration.checked_in = true;
     registration.checked_in_at = new Date();
     return this.registrationRepo.save(registration);
