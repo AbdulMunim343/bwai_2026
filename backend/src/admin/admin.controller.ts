@@ -6,6 +6,7 @@ import { WorkshopsService } from '../workshops/workshops.service';
 import { RegistrationsService } from '../registrations/registrations.service';
 import { ExceptionsService } from '../exceptions/exceptions.service';
 import { CreateWorkshopDto } from '../workshops/dto/create-workshop.dto';
+import { UpdateRegistrationStatusDto } from './dto/update-status.dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard)
@@ -88,21 +89,20 @@ export class AdminController {
     res.send(csv);
   }
 
-  // Status transitions
+  // Status update — accepts one or more IDs.
+  // Static route MUST be declared before the dynamic :id route in NestJS.
+  @Patch('registrations/status')
+  updateStatus(@Body() dto: UpdateRegistrationStatusDto) {
+    return this.adminService.bulkUpdateStatus(dto.ids, dto.status);
+  }
+
+  // Single-ID shorthand (kept for backward compat with row-level actions)
   @Patch('registrations/:id/status')
   updateRegistrationStatus(
     @Param('id') id: string,
     @Body('status') status: string,
   ) {
     return this.adminService.updateRegistrationStatus(id, status);
-  }
-
-  @Patch('registrations/bulk-status')
-  bulkUpdateStatus(
-    @Body('ids') ids: string[],
-    @Body('status') status: string,
-  ) {
-    return this.adminService.bulkUpdateStatus(ids, status);
   }
 
   // QR Scan
