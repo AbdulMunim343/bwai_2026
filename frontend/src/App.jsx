@@ -14,6 +14,7 @@ import ExceptionQueue from './features/admin/exception-review/views/exception-qu
 import CheckinView from './features/admin/checkin/views/checkin-view';
 import QrScanView from './features/admin/qr-scan/views/qr-scan-view';
 import UsersManagement from './features/admin/users/views/users-management';
+import EventCrud from './features/admin/event-management/views/event-crud';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
       <Route path="/admin/login" element={<Login />} />
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<DashboardHome />} />
+        <Route path="events" element={<EventCrud />} />
         <Route path="workshops" element={<WorkshopCrud />} />
         <Route path="registrations" element={<RegistrationsViewer />} />
         <Route path="exceptions" element={<ExceptionQueue />} />
