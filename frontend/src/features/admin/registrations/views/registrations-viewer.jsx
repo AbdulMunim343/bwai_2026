@@ -11,7 +11,7 @@ import {
   BULK_STATUSES,
   ALL_STATUSES,
 } from '../../../../shared/constants/registration-status';
-import { formatDate, formatDateTime } from '../../../../shared/utils/formatDate';
+import { formatDate } from '../../../../shared/utils/formatDate';
 
 function ExternalLinkIcon() {
   return (
@@ -339,7 +339,6 @@ export default function RegistrationsViewer() {
                   <th className="text-left py-3 px-3 border-b border-gdg-border font-semibold text-xs text-gdg-gray uppercase tracking-wide whitespace-nowrap">LinkedIn</th>
                   <th className="text-left py-3 px-3 border-b border-gdg-border font-semibold text-xs text-gdg-gray uppercase tracking-wide whitespace-nowrap">Motivation</th>
                   <th className="text-left py-3 px-3 border-b border-gdg-border font-semibold text-xs text-gdg-gray uppercase tracking-wide whitespace-nowrap">Registered</th>
-                  <th className="text-left py-3 px-3 border-b border-gdg-border font-semibold text-xs text-gdg-gray uppercase tracking-wide whitespace-nowrap">Check-in</th>
                   <th className="text-left py-3 px-3 border-b border-gdg-border font-semibold text-xs text-gdg-gray uppercase tracking-wide whitespace-nowrap">Status</th>
                   <th className="text-left py-3 px-3 border-b border-gdg-border font-semibold text-xs text-gdg-gray uppercase tracking-wide whitespace-nowrap">Actions</th>
                 </tr>
@@ -428,20 +427,6 @@ export default function RegistrationsViewer() {
                         {formatDate(r.registered_at)}
                       </td>
 
-                      {/* Check-in */}
-                      <td className="py-2.5 px-3 border-b border-gdg-border whitespace-nowrap">
-                        {r.checked_in ? (
-                          <div>
-                            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-gdg-green">Yes</span>
-                            {r.checked_in_at && (
-                              <div className="text-xs text-gdg-gray mt-0.5">{formatDateTime(r.checked_in_at)}</div>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-500">No</span>
-                        )}
-                      </td>
-
                       {/* Status */}
                       <td className="py-2.5 px-3 border-b border-gdg-border whitespace-nowrap">
                         <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${STATUS_COLORS[r.status] || 'bg-gray-100 text-gray-500'}`}>
@@ -469,7 +454,7 @@ export default function RegistrationsViewer() {
                 })}
                 {registrations.length === 0 && (
                   <tr>
-                    <td colSpan={16} className="text-center text-gdg-gray py-8">No registrations found</td>
+                    <td colSpan={15} className="text-center text-gdg-gray py-8">No registrations found</td>
                   </tr>
                 )}
               </tbody>

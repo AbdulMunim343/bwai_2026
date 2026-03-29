@@ -74,7 +74,23 @@ export class AdminService {
   ) {
     const qb = this.registrationRepo
       .createQueryBuilder('r')
-      .leftJoinAndSelect('r.attendee', 'a')
+      // leftJoin + explicit addSelect ensures every attendee column (including
+      // nullable ones: gender, github, linkedin, defines_you_best) is always
+      // present in the SQL output and mapped back to the response object.
+      .leftJoin('r.attendee', 'a')
+      .addSelect([
+        'a.id',
+        'a.name',
+        'a.email',
+        'a.phone',
+        'a.cnic',
+        'a.gender',
+        'a.university_org',
+        'a.github',
+        'a.linkedin',
+        'a.defines_you_best',
+        'a.created_at',
+      ])
       .where('r.workshop_id = :workshopId', { workshopId });
 
     if (filters.name) {
