@@ -6,10 +6,10 @@ import { adminRegistrationApi } from '../admin-registration-api';
 import {
   STATUS_COLORS,
   STATUS_BUTTON_COLORS,
-  STATUS_TRANSITIONS,
   STATUS_LABELS,
   STATUS_FILTER_OPTIONS,
   BULK_STATUSES,
+  ALL_STATUSES,
 } from '../../../../shared/constants/registration-status';
 
 const INITIAL_FILTERS = {
@@ -329,7 +329,8 @@ export default function RegistrationsViewer() {
               </thead>
               <tbody>
                 {registrations.map(r => {
-                  const allowed    = STATUS_TRANSITIONS[r.status] || [];
+                  // Show all statuses except the current one — no sequence restriction
+                  const allowed    = ALL_STATUSES.filter(s => s !== r.status);
                   const isSelected = selectedIds.has(r.id);
                   return (
                     <tr key={r.id} className={`hover:bg-gdg-light-gray ${isSelected ? 'bg-blue-50' : ''}`}>
