@@ -6,7 +6,6 @@ import { WorkshopsService } from '../workshops/workshops.service';
 import { RegistrationsService } from '../registrations/registrations.service';
 import { ExceptionsService } from '../exceptions/exceptions.service';
 import { CreateWorkshopDto } from '../workshops/dto/create-workshop.dto';
-import { UpdateRegistrationStatusDto } from './dto/update-status.dto';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard)
@@ -21,30 +20,6 @@ export class AdminController {
   @Get('stats')
   getStats() {
     return this.adminService.getStats();
-  }
-
-  // Events CRUD
-  @Get('events')
-  getEvents(@Query('page') page?: string, @Query('limit') limit?: string) {
-    return this.adminService.getEvents(
-      page ? parseInt(page) : 1,
-      limit ? parseInt(limit) : 100,
-    );
-  }
-
-  @Post('events')
-  createEvent(@Body() body: { name: string; type: string; description?: string; status?: string }) {
-    return this.adminService.createEvent(body as any);
-  }
-
-  @Patch('events/:id')
-  updateEvent(@Param('id') id: string, @Body() body: { name?: string; type?: string; description?: string; status?: string }) {
-    return this.adminService.updateEvent(id, body as any);
-  }
-
-  @Delete('events/:id')
-  deleteEvent(@Param('id') id: string) {
-    return this.adminService.deleteEvent(id);
   }
 
   // Workshop CRUD
@@ -113,20 +88,21 @@ export class AdminController {
     res.send(csv);
   }
 
-  // Status update — accepts one or more IDs.
-  // Static route MUST be declared before the dynamic :id route in NestJS.
-  @Patch('registrations/status')
-  updateStatus(@Body() dto: UpdateRegistrationStatusDto) {
-    return this.adminService.bulkUpdateStatus(dto.ids, dto.status);
-  }
-
-  // Single-ID shorthand (kept for backward compat with row-level actions)
+  // Status transitions
   @Patch('registrations/:id/status')
   updateRegistrationStatus(
     @Param('id') id: string,
     @Body('status') status: string,
   ) {
     return this.adminService.updateRegistrationStatus(id, status);
+  }
+
+  @Patch('registrations/bulk-status')
+  bulkUpdateStatus(
+    @Body('ids') ids: string[],
+    @Body('status') status: string,
+  ) {
+    return this.adminService.bulkUpdateStatus(ids, status);
   }
 
   // QR Scan

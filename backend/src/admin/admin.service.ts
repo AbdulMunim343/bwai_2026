@@ -6,10 +6,7 @@ import { Registration } from '../entities/registration.entity';
 import { ExceptionRequest } from '../entities/exception-request.entity';
 import { Attendee } from '../entities/attendee.entity';
 import { Admin } from '../entities/admin.entity';
-import { Event } from '../entities/event.entity';
 import { EmailService } from '../email/email.service';
-import { RegistrationStatus } from '../common/enums/registration-status.enum';
-import { EventType } from '../common/enums/event-type.enum';
 import * as QRCode from 'qrcode';
 import * as bcrypt from 'bcrypt';
 
@@ -26,8 +23,6 @@ export class AdminService {
     private attendeeRepo: Repository<Attendee>,
     @InjectRepository(Admin)
     private adminRepo: Repository<Admin>,
-    @InjectRepository(Event)
-    private eventRepo: Repository<Event>,
     private emailService: EmailService,
   ) {}
 
@@ -78,23 +73,7 @@ export class AdminService {
   ) {
     const qb = this.registrationRepo
       .createQueryBuilder('r')
-      // leftJoin + explicit addSelect ensures every attendee column (including
-      // nullable ones: gender, github, linkedin, defines_you_best) is always
-      // present in the SQL output and mapped back to the response object.
-      .leftJoin('r.attendee', 'a')
-      .addSelect([
-        'a.id',
-        'a.name',
-        'a.email',
-        'a.phone',
-        'a.cnic',
-        'a.gender',
-        'a.university_org',
-        'a.github',
-        'a.linkedin',
-        'a.defines_you_best',
-        'a.created_at',
-      ])
+      .leftJoinAndSelect('r.attendee', 'a')
       .where('r.workshop_id = :workshopId', { workshopId });
 
     if (filters.name) {
@@ -160,21 +139,27 @@ export class AdminService {
     });
     if (!registration) throw new NotFoundException('Registration not found');
 
-    const { SHORTLISTED, REJECTED, ATTENDED } = RegistrationStatus;
+    const validTransitions: Record<string, string[]> = {
+      // current statuses
+      pending:    ['confirm', 'shortlist', 'reject'],
+      confirm:    ['check-in'],
+      shortlist:  ['check-in', 'reject'],
+      // backward-compat: old status values already in the database
+      shortlisted: ['check-in', 'reject'],
+      attended:    [],
+      rejected:    [],
+    };
 
-    // No sequence restriction — admin can set any status at any time.
-    // Validate only that the requested status is a known enum value.
-    const validStatuses = Object.values(RegistrationStatus) as string[];
-    if (!validStatuses.includes(newStatus)) {
+    const allowed = validTransitions[registration.status];
+    if (!allowed || !allowed.includes(newStatus)) {
       throw new BadRequestException(
-        `Invalid status "${newStatus}". Must be one of: ${validStatuses.join(', ')}`,
+        `Cannot transition from "${registration.status}" to "${newStatus}". Allowed: ${allowed?.join(', ') || 'none'}`,
       );
     }
 
     registration.status = newStatus;
 
-    if (newStatus === SHORTLISTED) {
-      // Generate QR and send shortlist email
+    if (newStatus === 'shortlist') {
       const qrData = JSON.stringify({
         registrationId: registration.id,
         name: registration.attendee.name,
@@ -192,8 +177,7 @@ export class AdminService {
         registration.id,
         qrData,
       );
-    } else if (newStatus === ATTENDED) {
-      // Mark physical check-in and send attendance confirmation
+    } else if (newStatus === 'check-in') {
       registration.checked_in = true;
       registration.checked_in_at = new Date();
       await this.registrationRepo.save(registration);
@@ -203,7 +187,7 @@ export class AdminService {
         registration.attendee.name,
         registration.workshop,
       );
-    } else if (newStatus === REJECTED) {
+    } else if (newStatus === 'reject') {
       await this.registrationRepo.save(registration);
 
       await this.emailService.sendRejectionEmail(
@@ -272,7 +256,11 @@ export class AdminService {
     });
     if (!registration) throw new NotFoundException('Registration not found');
 
-    registration.status = RegistrationStatus.ATTENDED;
+    if (registration.status !== 'shortlist' && registration.status !== 'confirm') {
+      throw new BadRequestException(`Cannot check in. Current status: ${registration.status}`);
+    }
+
+    registration.status = 'check-in';
     registration.checked_in = true;
     registration.checked_in_at = new Date();
     return this.registrationRepo.save(registration);
@@ -341,39 +329,6 @@ export class AdminService {
   async deleteUser(id: string) {
     const result = await this.adminRepo.delete(id);
     if (result.affected === 0) throw new NotFoundException('User not found');
-    return { deleted: true };
-  }
-
-  // Events CRUD
-  async getEvents(page = 1, limit = 100) {
-    const [data, total] = await this.eventRepo.findAndCount({
-      order: { created_at: 'DESC' },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
-    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
-  }
-
-  async createEvent(data: { name: string; type: EventType; description?: string; status?: string }) {
-    const event = this.eventRepo.create({
-      name: data.name,
-      type: data.type,
-      description: data.description,
-      status: data.status || 'upcoming',
-    });
-    return this.eventRepo.save(event);
-  }
-
-  async updateEvent(id: string, data: { name?: string; type?: EventType; description?: string; status?: string }) {
-    const event = await this.eventRepo.findOne({ where: { id } });
-    if (!event) throw new NotFoundException('Event not found');
-    Object.assign(event, data);
-    return this.eventRepo.save(event);
-  }
-
-  async deleteEvent(id: string) {
-    const result = await this.eventRepo.delete(id);
-    if (result.affected === 0) throw new NotFoundException('Event not found');
     return { deleted: true };
   }
 

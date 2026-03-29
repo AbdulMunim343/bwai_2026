@@ -1,6 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
 import { Registration } from './registration.entity';
-import { Event } from './event.entity';
 
 @Entity('workshops')
 export class Workshop {
@@ -30,13 +29,6 @@ export class Workshop {
 
   @CreateDateColumn()
   created_at: Date;
-
-  @Column({ nullable: true })
-  event_id: string;
-
-  @ManyToOne(() => Event, (e) => e.workshops, { nullable: true })
-  @JoinColumn({ name: 'event_id' })
-  event: Event;
 
   @OneToMany(() => Registration, (r) => r.workshop)
   registrations: Registration[];
