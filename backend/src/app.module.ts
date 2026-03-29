@@ -15,7 +15,6 @@ import { Workshop } from './entities/workshop.entity';
 import { Attendee } from './entities/attendee.entity';
 import { Registration } from './entities/registration.entity';
 import { ExceptionRequest } from './entities/exception-request.entity';
-import { Event } from './entities/event.entity';
 
 @Module({
   imports: [
@@ -32,7 +31,7 @@ import { Event } from './entities/event.entity';
       username: process.env.DATABASE_URL ? undefined : (process.env.DB_USER || 'postgres'),
       password: process.env.DATABASE_URL ? undefined : (process.env.DB_PASSWORD || 'munim343'),
       database: process.env.DATABASE_URL ? undefined : (process.env.DB_NAME || 'gdg_bwai'),
-      entities: [Admin, Workshop, Attendee, Registration, ExceptionRequest, Event],
+      entities: [Admin, Workshop, Attendee, Registration, ExceptionRequest],
       synchronize: true,
       ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
     }),

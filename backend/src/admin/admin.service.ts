@@ -6,10 +6,8 @@ import { Registration } from '../entities/registration.entity';
 import { ExceptionRequest } from '../entities/exception-request.entity';
 import { Attendee } from '../entities/attendee.entity';
 import { Admin } from '../entities/admin.entity';
-import { Event } from '../entities/event.entity';
 import { EmailService } from '../email/email.service';
 import { RegistrationStatus } from '../common/enums/registration-status.enum';
-import { EventType } from '../common/enums/event-type.enum';
 import * as QRCode from 'qrcode';
 import * as bcrypt from 'bcrypt';
 
@@ -26,8 +24,6 @@ export class AdminService {
     private attendeeRepo: Repository<Attendee>,
     @InjectRepository(Admin)
     private adminRepo: Repository<Admin>,
-    @InjectRepository(Event)
-    private eventRepo: Repository<Event>,
     private emailService: EmailService,
   ) {}
 
@@ -341,39 +337,6 @@ export class AdminService {
   async deleteUser(id: string) {
     const result = await this.adminRepo.delete(id);
     if (result.affected === 0) throw new NotFoundException('User not found');
-    return { deleted: true };
-  }
-
-  // Events CRUD
-  async getEvents(page = 1, limit = 100) {
-    const [data, total] = await this.eventRepo.findAndCount({
-      order: { created_at: 'DESC' },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
-    return { data, total, page, limit, totalPages: Math.ceil(total / limit) };
-  }
-
-  async createEvent(data: { name: string; type: EventType; description?: string; status?: string }) {
-    const event = this.eventRepo.create({
-      name: data.name,
-      type: data.type,
-      description: data.description,
-      status: data.status || 'upcoming',
-    });
-    return this.eventRepo.save(event);
-  }
-
-  async updateEvent(id: string, data: { name?: string; type?: EventType; description?: string; status?: string }) {
-    const event = await this.eventRepo.findOne({ where: { id } });
-    if (!event) throw new NotFoundException('Event not found');
-    Object.assign(event, data);
-    return this.eventRepo.save(event);
-  }
-
-  async deleteEvent(id: string) {
-    const result = await this.eventRepo.delete(id);
-    if (result.affected === 0) throw new NotFoundException('Event not found');
     return { deleted: true };
   }
 

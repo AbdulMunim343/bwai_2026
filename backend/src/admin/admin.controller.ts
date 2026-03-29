@@ -23,30 +23,6 @@ export class AdminController {
     return this.adminService.getStats();
   }
 
-  // Events CRUD
-  @Get('events')
-  getEvents(@Query('page') page?: string, @Query('limit') limit?: string) {
-    return this.adminService.getEvents(
-      page ? parseInt(page) : 1,
-      limit ? parseInt(limit) : 100,
-    );
-  }
-
-  @Post('events')
-  createEvent(@Body() body: { name: string; type: string; description?: string; status?: string }) {
-    return this.adminService.createEvent(body as any);
-  }
-
-  @Patch('events/:id')
-  updateEvent(@Param('id') id: string, @Body() body: { name?: string; type?: string; description?: string; status?: string }) {
-    return this.adminService.updateEvent(id, body as any);
-  }
-
-  @Delete('events/:id')
-  deleteEvent(@Param('id') id: string) {
-    return this.adminService.deleteEvent(id);
-  }
-
   // Workshop CRUD
   @Get('workshops')
   getWorkshops(@Query('page') page?: string, @Query('limit') limit?: string) {
